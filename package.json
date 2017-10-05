@@ -1,6 +1,6 @@
 {
   "name": "background-timer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Allows timeouts, intervals and animations to continue in background tabs.",
   "main": "src/index.js",
   "directories": {
