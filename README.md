@@ -1,7 +1,7 @@
+# NO LONGER WORKS
+
 # background-timer
 Allows timeouts, intervals and animations to continue in background tabs.
-
-Chrome and Firefox throttle timers in background tabs, but they do NOT throttle WebWorkers. This is a hack to allow timers to continue more or less normally.
 
 Timers will use the regular methods when the tab is in focus, and switch to WebWorker timers when out of focus (with no delay).
 
