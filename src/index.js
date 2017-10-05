@@ -1,3 +1,4 @@
+var getWorker = require('./worker.js')
 var trueWindow
 
 function BackgroundTimer (opts) {
@@ -5,7 +6,6 @@ function BackgroundTimer (opts) {
   if (!(self instanceof BackgroundTimer)) return new BackgroundTimer(opts)
   
   opts.global = opts.global || false
-  opts.workerURL = opts.workerURL || 'worker.js'
   self._workerSupport = !!window.Worker
   self._callbacks = {}
   
@@ -23,7 +23,7 @@ function BackgroundTimer (opts) {
   }
   
   if (self._workerSupport) {
-    self._worker = new Worker(opts.workerURL)
+    self._worker = getWorker()
     
     self._worker.onmessage = self._onmessage.bind(self)
   }

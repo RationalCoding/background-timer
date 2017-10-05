@@ -10,7 +10,7 @@
   </body>
   <script src="./../dist/background-timer.js"></script>
   <script>
-    new BackgroundTimer({global: true, workerURL: './../dist/worker.js'})
+    new BackgroundTimer({global: true})
     
     window.requestAnimationFrame(function () {
       if (document.hidden) console.log(new Date())
