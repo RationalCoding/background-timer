@@ -6,6 +6,7 @@ function BackgroundTimer (opts) {
   var self = this
   if (!(self instanceof BackgroundTimer)) return new BackgroundTimer(opts)
   
+  opts = opts || {}
   opts.global = opts.global || false
   self._workerSupport = !!window.Worker
   self._callbacks = {}
