@@ -45,7 +45,7 @@ BackgroundTimer.prototype.requestAnimationFrame = function (cb) {
     if (!document.hidden) cb() // only use if tab is visible
   })
   
-  self._setWorkerInterval(function () {
+  self._setWorkerTimeout(function () {
     if (document.hidden) cb()
   }, 50, id) // 50ms interval since workers have no requestAnimationFrame
   
