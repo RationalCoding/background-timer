@@ -1,0 +1,19 @@
+<html lang="en">
+  <head>
+
+  </head>
+  <body>
+  
+  
+  
+  
+  </body>
+  <script src="./../dist/background-timer.js"></script>
+  <script>
+    new BackgroundTimer({global: true, workerURL: './../dist/worker.js'})
+    
+    window.requestAnimationFrame(function () {
+      if (document.hidden) console.log(new Date())
+    }, 50)
+  </script>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "background-timer",
+  "version": "1.0.0",
+  "description": "Allows timeouts, intervals and animations to continue in background tabs.",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "browserify src/index.js -s BackgroundTimer -o dist/background-timer.js"
+  },
+  "author": "Thomas Mullen",
+  "license": "MIT",
+  "devDependencies": {
+    "standard": "^8.6.0",
+    "tape": "^4.6.3"
+  }
+}
