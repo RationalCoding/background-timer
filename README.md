@@ -1,5 +1,3 @@
-# NO LONGER WORKS
-
 # background-timer
 Allows timeouts, intervals and animations to continue in background tabs.
 
