@@ -7,27 +7,46 @@ function BackgroundTimer (opts) {
   
   opts = opts || {}
   opts.global = opts.global || false
-  self._workerSupport = !!window.Worker
+  self._workerSupport = !!window.open
   self._callbacks = {}
+  self._worker = null
   
-  var methodNames = ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame'] 
+  var methodNames = [
+    'setTimeout',
+    'clearTimeout',
+    'setInterval',
+    'clearInterval',
+    'requestAnimationFrame',
+    'cancelAnimationFrame'
+  ] 
   
-  if (opts.global) {
+  if (opts.global && !trueWindow) {
     // override globals (yuck, but good for monkey-patching)
     trueWindow = {}
     methodNames.forEach(function (methodName) {
       trueWindow[methodName] = window[methodName].bind(window)
       window[methodName] = self[methodName].bind(self)
     })
-  } else {
+  } else if (!trueWindow) {
     trueWindow = window
   }
   
   if (self._workerSupport) {
-    self._worker = getWorker()
-    
-    self._worker.onmessage = self._onmessage.bind(self)
+    getWorker(self._onReady.bind(self))
   }
+}
+
+BackgroundTimer.prototype._onReady = function (worker) {
+  var self = this
+  
+  self._worker = worker
+  
+  window.onbeforeunload = function () {
+    self._worker.close()
+    self._worker = null
+  }
+
+  self._worker.onmessage = self._onmessage.bind(self)
 }
 
 BackgroundTimer.prototype._onmessage = function (msg) {
@@ -42,7 +61,7 @@ BackgroundTimer.prototype.requestAnimationFrame = function (cb) {
   var self = this
   
   var id = trueWindow.requestAnimationFrame(function () {
-    if (!document.hidden) cb() // only use if tab is visible
+    if (!document.hidden || !self._worker) cb() // only use if tab is visible
   })
   
   self._setWorkerTimeout(function () {
@@ -63,7 +82,7 @@ BackgroundTimer.prototype.setInterval = function (cb, time) {
   var self = this
   
   var id = trueWindow.setInterval(function () {
-    if (!document.hidden) cb() // only use if tab is visible
+    if (!document.hidden || !self._worker) cb() // only use if tab is visible
   }, time)
   
   self._setWorkerInterval(function () {
@@ -112,12 +131,13 @@ BackgroundTimer.prototype._setWorkerInterval = function (cb, time, id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'setInterval',
     time: time,
     id: id
-  })
+  }, '*')
   
   self._callbacks[id] = cb
 }
@@ -126,11 +146,12 @@ BackgroundTimer.prototype._clearWorkerInterval = function (id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'clearInterval',
     id: id
-  })
+  }, '*')
   
   delete self._callbacks[id]
 }
@@ -139,12 +160,13 @@ BackgroundTimer.prototype._setWorkerTimeout = function (cb, time, id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'setTimeout',
     time: time,
     id: id
-  })
+  }, '*')
   
   self._callbacks[id] = function () {
     delete self._callbacks[id] // no longer needed
@@ -157,11 +179,12 @@ BackgroundTimer.prototype._clearWorkerTimeout = function (id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'clearTimeout',
     id: id
-  })
+  }, '*')
   
   delete self._callbacks[id]
 }

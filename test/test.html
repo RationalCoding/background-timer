@@ -4,16 +4,17 @@
   </head>
   <body>
   
-  
-  
-  
   </body>
   <script src="./../dist/background-timer.js"></script>
   <script>
     new BackgroundTimer({global: true})
-    
-    window.requestAnimationFrame(function () {
-      if (document.hidden) console.log(new Date())
+
+    window.setInterval(function () {
+      if (document.hidden) {
+        console.log('hidden: ' + new Date())
+      } else {
+        console.log('visible: ' + new Date())
+      }
     }, 50)
   </script>
 </html>

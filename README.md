@@ -3,7 +3,7 @@
 # background-timer
 Allows timeouts, intervals and animations to continue in background tabs.
 
-Timers will use the regular methods when the tab is in focus, and switch to WebWorker timers when out of focus (with no delay).
+Timers will use the regular methods when the tab is in focus, and switch to timers within another small window when the tab is out of focus (with no delay).
 
 ## Install
 

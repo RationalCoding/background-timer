@@ -1,10 +1,10 @@
 var workerCode = `var timerIds = {}
 
-self.onmessage = function (msg) {
+window.addEventListener('message', function (msg) {
   var id = msg.data.id
   switch (msg.data.method) {
     case 'setInterval':
-      id = setInterval(self.postMessage.bind(null, id), msg.data.time)
+      id = setInterval(window.opener.postMessage.bind(null, id, '*'), msg.data.time)
       timerIds[msg.data.id] = id
       break;
     case 'clearInterval':
@@ -13,7 +13,7 @@ self.onmessage = function (msg) {
       break;
     case 'setTimeout':
       id = setTimeout(function () {
-        self.postMessage(id)
+        window.opener.postMessage(id, '*')
         delete timerIds[msg.data.id] // id mapping no longer needed
       }, msg.data.time)
       timerIds[msg.data.id] = id
@@ -23,13 +23,18 @@ self.onmessage = function (msg) {
       delete timerIds[msg.data.id]
       break;
   }
-}
+})
 `
 
-module.exports = function getWorker () {
-  var blob = new Blob([workerCode], {
-    type: 'application/javascript'
-  })
+module.exports = function getWorker (cb) {
+  var win =  window.open('', 'timer_window'+Math.random(), 'location=no,width=1,height=1,resizable=no')
+  if (!win) return // popup blocked
   
-  return new Worker(window.URL.createObjectURL(blob))
+  win.document.title = 'Worker Window'
+  
+  var script = document.createElement('script')
+  script.innerHTML = workerCode
+  win.document.head.appendChild(script)
+  
+  cb(win)
 }

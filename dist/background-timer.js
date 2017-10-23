@@ -8,27 +8,46 @@ function BackgroundTimer (opts) {
   
   opts = opts || {}
   opts.global = opts.global || false
-  self._workerSupport = !!window.Worker
+  self._workerSupport = !!window.open
   self._callbacks = {}
+  self._worker = null
   
-  var methodNames = ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame'] 
+  var methodNames = [
+    'setTimeout',
+    'clearTimeout',
+    'setInterval',
+    'clearInterval',
+    'requestAnimationFrame',
+    'cancelAnimationFrame'
+  ] 
   
-  if (opts.global) {
+  if (opts.global && !trueWindow) {
     // override globals (yuck, but good for monkey-patching)
     trueWindow = {}
     methodNames.forEach(function (methodName) {
       trueWindow[methodName] = window[methodName].bind(window)
       window[methodName] = self[methodName].bind(self)
     })
-  } else {
+  } else if (!trueWindow) {
     trueWindow = window
   }
   
   if (self._workerSupport) {
-    self._worker = getWorker()
-    
-    self._worker.onmessage = self._onmessage.bind(self)
+    getWorker(self._onReady.bind(self))
   }
+}
+
+BackgroundTimer.prototype._onReady = function (worker) {
+  var self = this
+  
+  self._worker = worker
+  
+  window.onbeforeunload = function () {
+    self._worker.close()
+    self._worker = null
+  }
+
+  self._worker.onmessage = self._onmessage.bind(self)
 }
 
 BackgroundTimer.prototype._onmessage = function (msg) {
@@ -43,10 +62,10 @@ BackgroundTimer.prototype.requestAnimationFrame = function (cb) {
   var self = this
   
   var id = trueWindow.requestAnimationFrame(function () {
-    if (!document.hidden) cb() // only use if tab is visible
+    if (!document.hidden || !self._worker) cb() // only use if tab is visible
   })
   
-  self._setWorkerInterval(function () {
+  self._setWorkerTimeout(function () {
     if (document.hidden) cb()
   }, 50, id) // 50ms interval since workers have no requestAnimationFrame
   
@@ -64,7 +83,7 @@ BackgroundTimer.prototype.setInterval = function (cb, time) {
   var self = this
   
   var id = trueWindow.setInterval(function () {
-    if (!document.hidden) cb() // only use if tab is visible
+    if (!document.hidden || !self._worker) cb() // only use if tab is visible
   }, time)
   
   self._setWorkerInterval(function () {
@@ -113,12 +132,13 @@ BackgroundTimer.prototype._setWorkerInterval = function (cb, time, id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'setInterval',
     time: time,
     id: id
-  })
+  }, '*')
   
   self._callbacks[id] = cb
 }
@@ -127,11 +147,12 @@ BackgroundTimer.prototype._clearWorkerInterval = function (id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'clearInterval',
     id: id
-  })
+  }, '*')
   
   delete self._callbacks[id]
 }
@@ -140,12 +161,13 @@ BackgroundTimer.prototype._setWorkerTimeout = function (cb, time, id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'setTimeout',
     time: time,
     id: id
-  })
+  }, '*')
   
   self._callbacks[id] = function () {
     delete self._callbacks[id] // no longer needed
@@ -158,11 +180,12 @@ BackgroundTimer.prototype._clearWorkerTimeout = function (id) {
   var self = this
   
   if (!self._workerSupport) return
+  if (!self._worker) return
   
   self._worker.postMessage({
     method: 'clearTimeout',
     id: id
-  })
+  }, '*')
   
   delete self._callbacks[id]
 }
@@ -172,11 +195,11 @@ module.exports = BackgroundTimer
 },{"./worker.js":2}],2:[function(require,module,exports){
 var workerCode = `var timerIds = {}
 
-self.onmessage = function (msg) {
+window.addEventListener('message', function (msg) {
   var id = msg.data.id
   switch (msg.data.method) {
     case 'setInterval':
-      id = setInterval(self.postMessage.bind(null, id), msg.data.time)
+      id = setInterval(window.opener.postMessage.bind(null, id, '*'), msg.data.time)
       timerIds[msg.data.id] = id
       break;
     case 'clearInterval':
@@ -185,7 +208,7 @@ self.onmessage = function (msg) {
       break;
     case 'setTimeout':
       id = setTimeout(function () {
-        self.postMessage(id)
+        window.opener.postMessage(id, '*')
         delete timerIds[msg.data.id] // id mapping no longer needed
       }, msg.data.time)
       timerIds[msg.data.id] = id
@@ -195,15 +218,20 @@ self.onmessage = function (msg) {
       delete timerIds[msg.data.id]
       break;
   }
-}
+})
 `
 
-module.exports = function getWorker () {
-  var blob = new Blob([workerCode], {
-    type: 'application/javascript'
-  })
+module.exports = function getWorker (cb) {
+  var win =  window.open('', 'timer_window'+Math.random(), 'location=no,width=1,height=1,resizable=no')
+  if (!win) return // popup blocked
   
-  return new Worker(window.URL.createObjectURL(blob))
+  win.document.title = 'Worker Window'
+  
+  var script = document.createElement('script')
+  script.innerHTML = workerCode
+  win.document.head.appendChild(script)
+  
+  cb(win)
 }
 },{}]},{},[1])(1)
 });
