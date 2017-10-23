@@ -3,7 +3,7 @@
 # background-timer
 Allows timeouts, intervals and animations to continue in background tabs.
 
-Timers will use the regular methods when the tab is in focus, and switch to timers within another small window when the tab is out of focus (with no delay).
+Timers will use regular methods when the tab is focused, and rely on timers within a small focused window when out of focus.
 
 ## Install
 
@@ -26,7 +26,9 @@ window.BackgroundTimer
 ## Examples
 
 ```javascript
-  BackgroundTimer({global: true}) // override globals with this option
+  element.addEventListener('click', function () { // must be triggered by user event
+    BackgroundTimer({global: true}) // override globals with this option
+  })
 
   window.requestAnimationFrame(function () {}, 50)
   window.setInterval(function () {}, 50)
@@ -38,8 +40,10 @@ window.BackgroundTimer
 ```
 
 ```javascript
-  var backgroundTimer = new BackgroundTimer({global: false}) // it's cleaner to avoid globals
-
+  element.addEventListener('click', function () { // must be triggered by user event
+    var backgroundTimer = new BackgroundTimer({global: false}) // it's cleaner to avoid globals
+  })
+  
   backgroundTimer.requestAnimationFrame(function () {}, 50)
   backgroundTimer.setInterval(function () {}, 50)
   backgroundTimer.setTimeout(function () {}, 50)
