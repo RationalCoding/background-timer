@@ -1,4 +1,7 @@
 # background-timer
+
+## DEPRECATED: Use silent-audio instead.
+
 Allows timeouts, intervals and animations to continue in background tabs.
 
 Timers will use regular methods when the tab is focused, and rely on timers within a small popup window when out of focus.
