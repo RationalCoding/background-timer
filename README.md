@@ -1,6 +1,6 @@
 # background-timer
 
-## DEPRECATED: Use silent-audio instead.
+## [DEPRECATED: Use silent-audio instead.](https://github.com/RationalCoding/silent-audio)
 
 Allows timeouts, intervals and animations to continue in background tabs.
 
